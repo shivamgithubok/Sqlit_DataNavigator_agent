@@ -1,0 +1,7 @@
+uvicorn[standard]
+fastapi
+pandas
+openai
+dotenv
+langchain_core
+langgraph

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataNavigator | Smart Insights</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --container-bg: rgba(30, 41, 59, 0.7);
+            --accent-color: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.3);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --user-bubble: #1e293b;
+            --bot-bubble: #334155;
+            --input-bg: rgba(15, 23, 42, 0.8);
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(56, 189, 248, 0.05) 0%, transparent 40%);
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        #chat-container {
+            flex: 1;
+            background: var(--container-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+            scrollbar-width: thin;
+            scrollbar-color: var(--bot-bubble) transparent;
+        }
+
+        #chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #chat-container::-webkit-scrollbar-thumb {
+            background-color: var(--bot-bubble);
+            border-radius: 3px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 1rem;
+            border-radius: 1rem;
+            font-size: 0.9375rem;
+            line-height: 1.5;
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user {
+            align-self: flex-end;
+            background-color: var(--accent-color);
+            color: #000;
+            font-weight: 500;
+            border-bottom-right-radius: 0.25rem;
+        }
+
+        .bot {
+            align-self: flex-start;
+            background-color: var(--bot-bubble);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 0.25rem;
+        }
+
+        .bot-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .table-container {
+            margin-top: 1rem;
+            overflow-x: auto;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.4);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        th {
+            background: rgba(51, 65, 85, 0.5);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .input-area {
+            position: relative;
+            display: flex;
+            gap: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        #user-input {
+            flex: 1;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #user-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        button {
+            background: var(--accent-color);
+            color: #000;
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loader {
+            display: none;
+            margin-left: 0.5rem;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .sql-query {
+            margin-top: 0.5rem;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 0.25rem;
+            border-left: 2px solid var(--accent-color);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>DataNavigator</h1>
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            System Online
+        </div>
+    </header>
+
+    <main>
+        <div id="chat-container">
+            <div class="message bot">
+                <span class="bot-label">ASSISTANT</span>
+                Welcome back. I can help you analyze tracking data using natural language. What would you like to know?
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Query the database (e.g., 'Last seen animals')"
+                autocomplete="off">
+            <button id="send-btn" onclick="sendMessage()">
+                <span>Analyze</span>
+                <div class="loader" id="btn-loader"></div>
+            </button>
+        </div>
+    </main>
+
+    <script>
+        const input = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const loader = document.getElementById('btn-loader');
+        const container = document.getElementById('chat-container');
+
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        async function sendMessage() {
+            const message = input.value.trim();
+            if (!message || sendBtn.disabled) return;
+
+            setLoading(true);
+            appendMessage('user', message);
+            input.value = '';
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+
+                if (!response.ok) throw new Error('API connection failed');
+
+                const data = await response.json();
+
+                let botMsg = '';
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(msg => {
+                        appendMessage('bot', msg, data.sql_query);
+                    });
+                }
+
+                if (data.data && data.data.length > 0) {
+                    appendTable(data.data);
+                } else if ((!data.messages || data.messages.length === 0) && data.error) {
+                    appendMessage('bot', `Error: ${data.error}`);
+                }
+
+            } catch (error) {
+                appendMessage('bot', `System Error: ${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function setLoading(isLoading) {
+            sendBtn.disabled = isLoading;
+            loader.style.display = isLoading ? 'inline-block' : 'none';
+            sendBtn.querySelector('span').textContent = isLoading ? 'Processing' : 'Analyze';
+        }
+
+        function appendMessage(sender, text, sql) {
+            const div = document.createElement('div');
+            div.className = `message ${sender}`;
+
+            if (sender === 'bot') {
+                const label = document.createElement('span');
+                label.className = 'bot-label';
+                label.textContent = 'ASSISTANT';
+                div.appendChild(label);
+            }
+
+            const content = document.createElement('div');
+            content.textContent = text;
+            div.appendChild(content);
+
+            if (sql) {
+                const sqlDiv = document.createElement('div');
+                sqlDiv.className = 'sql-query';
+                sqlDiv.textContent = `SQL: ${sql}`;
+                div.appendChild(sqlDiv);
+            }
+
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendTable(data) {
+            if (!data || data.length === 0) return;
+
+            const tableWrapper = document.createElement('div');
+            tableWrapper.className = 'table-container';
+            const table = document.createElement('table');
+
+            // Header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            Object.keys(data[0]).forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key.replace(/_/g, ' ').toUpperCase();
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Body
+            const tbody = document.createElement('tbody');
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                Object.values(row).forEach(val => {
+                    const td = document.createElement('td');
+                    td.textContent = val === null ? '-' : val;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            tableWrapper.appendChild(table);
+
+            const div = document.createElement('div');
+            div.className = 'message bot';
+            const label = document.createElement('span');
+            label.className = 'bot-label';
+            label.textContent = 'QUERY RESULT';
+            div.appendChild(label);
+            div.appendChild(tableWrapper);
+
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+    </script>
+</body>
+
+</html>
